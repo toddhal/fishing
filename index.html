@@ -45,6 +45,20 @@
             margin: 5px 0;
         }
 
+        #rodDisplay {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rod-icon {
+            width: 30px;
+            height: 6px;
+            border-radius: 3px;
+            display: inline-block;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
         #shopBtn {
             position: absolute;
             top: 10px;
@@ -78,6 +92,8 @@
             color: white;
             z-index: 100;
             min-width: 350px;
+            max-height: 80vh;
+            overflow-y: auto;
         }
 
         #shop h2 {
@@ -235,6 +251,10 @@
             opacity: 0.4;
         }
 
+        .fish-entry.night-fish {
+            border-left: 3px solid #9b59b6;
+        }
+
         .fish-icon {
             font-size: 30px;
             margin-right: 15px;
@@ -271,6 +291,83 @@
             cursor: pointer;
             font-size: 16px;
         }
+
+        /* Reeling Mini-game UI */
+        #reelGame {
+            display: none;
+            position: absolute;
+            bottom: 150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            background: rgba(0,0,0,0.7);
+            border-radius: 15px;
+            padding: 15px;
+            z-index: 80;
+        }
+
+        #reelGame h3 {
+            color: white;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        #tensionBar {
+            width: 100%;
+            height: 30px;
+            background: linear-gradient(90deg, #27ae60 0%, #27ae60 30%, #f1c40f 30%, #f1c40f 70%, #e74c3c 70%, #e74c3c 100%);
+            border-radius: 5px;
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        #tensionMarker {
+            position: absolute;
+            width: 8px;
+            height: 40px;
+            background: white;
+            border: 2px solid #333;
+            border-radius: 4px;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: left 0.05s;
+        }
+
+        #reelProgress {
+            width: 100%;
+            height: 15px;
+            background: #333;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #reelProgressFill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            transition: width 0.1s;
+        }
+
+        #fishStruggle {
+            text-align: center;
+            color: #f39c12;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        /* Time indicator */
+        #timeIndicator {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 16px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
     </style>
 </head>
 <body>
@@ -282,7 +379,10 @@
             <div>🎣 Level: <span id="level">1</span></div>
             <div>⭐ XP: <span id="xp">0</span>/<span id="xpNeeded">100</span></div>
             <div>🐟 Fish Caught: <span id="totalFish">0</span></div>
+            <div id="rodDisplay">🎣 Rod: <span class="rod-icon" id="rodIcon"></span> <span id="rodName">Wood</span></div>
         </div>
+
+        <div id="timeIndicator">☀️ Day</div>
 
         <button id="collectionBtn">📚 Collection</button>
         <button id="shopBtn">🛒 Shop</button>
@@ -295,13 +395,25 @@
 
         <div id="instructions">Hold SPACE or CLICK to charge cast, release to fish!</div>
 
+        <!-- Reeling Mini-game -->
+        <div id="reelGame">
+            <h3>🎣 Keep the marker in the GREEN zone! Hold SPACE/Click to reel!</h3>
+            <div id="tensionBar">
+                <div id="tensionMarker"></div>
+            </div>
+            <div id="reelProgress">
+                <div id="reelProgressFill"></div>
+            </div>
+            <div id="fishStruggle">The fish is calm...</div>
+        </div>
+
         <div id="shop">
             <h2>🛒 Upgrade Shop</h2>
             <div class="upgrade">
                 <div>
                     <strong>🎣 Better Rod</strong><br>
-                    <small>Faster fish attraction</small><br>
-                    <small>Level: <span id="rodLevel">1</span></small>
+                    <small>Faster fish attraction + Better rods!</small><br>
+                    <small>Level: <span id="rodLevel">1</span>/10</small>
                 </div>
                 <button id="buyRod">100 🪙</button>
             </div>
@@ -309,15 +421,15 @@
                 <div>
                     <strong>🪱 Premium Bait</strong><br>
                     <small>Attract rarer fish</small><br>
-                    <small>Level: <span id="baitLevel">1</span></small>
+                    <small>Level: <span id="baitLevel">1</span>/10</small>
                 </div>
                 <button id="buyBait">150 🪙</button>
             </div>
             <div class="upgrade">
                 <div>
                     <strong>🧵 Strong Line</strong><br>
-                    <small>Catch bigger fish</small><br>
-                    <small>Level: <span id="lineLevel">1</span></small>
+                    <small>Catch bigger fish + easier reeling</small><br>
+                    <small>Level: <span id="lineLevel">1</span>/10</small>
                 </div>
                 <button id="buyLine">200 🪙</button>
             </div>
@@ -325,7 +437,7 @@
                 <div>
                     <strong>🍀 Lucky Charm</strong><br>
                     <small>More bonus rewards</small><br>
-                    <small>Level: <span id="luckLevel">1</span></small>
+                    <small>Level: <span id="luckLevel">1</span>/10</small>
                 </div>
                 <button id="buyLuck">250 🪙</button>
             </div>
@@ -363,16 +475,18 @@
 
         function playSound(freq, duration, type = 'sine', volume = 0.3) {
             if (!audioCtx) return;
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            oscillator.frequency.value = freq;
-            oscillator.type = type;
-            gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + duration);
+            try {
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.frequency.value = freq;
+                oscillator.type = type;
+                gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + duration);
+            } catch (e) {}
         }
 
         function playCastSound() {
@@ -381,19 +495,19 @@
         }
 
         function playSplashSound() {
-            playSound(100, 0.3, 'noise');
+            // Create white noise for splash
             for (let i = 0; i < 5; i++) {
-                setTimeout(() => playSound(80 + Math.random() * 40, 0.1, 'sine', 0.1), i * 50);
+                setTimeout(() => playSound(80 + Math.random() * 60, 0.15, 'triangle', 0.15), i * 40);
             }
         }
 
         function playBiteSound() {
             playSound(800, 0.1, 'square', 0.2);
-            playSound(1000, 0.1, 'square', 0.2);
+            setTimeout(() => playSound(1000, 0.1, 'square', 0.2), 50);
         }
 
         function playCatchSound(value) {
-            const baseFreq = 400 + value * 20;
+            const baseFreq = 400 + Math.min(value, 100) * 5;
             playSound(baseFreq, 0.15, 'sine');
             setTimeout(() => playSound(baseFreq * 1.25, 0.15, 'sine'), 100);
             setTimeout(() => playSound(baseFreq * 1.5, 0.2, 'sine'), 200);
@@ -411,22 +525,65 @@
             setTimeout(() => playSound(150, 0.3, 'sawtooth', 0.2), 100);
         }
 
-        // Fish Types
-        const fishTypes = [
-            { name: 'Sardine', emoji: '🐟', value: 5, xp: 10, rarity: 1, minLine: 1, weight: 40 },
-            { name: 'Mackerel', emoji: '🐠', value: 10, xp: 20, rarity: 1, minLine: 1, weight: 30 },
-            { name: 'Bass', emoji: '🐡', value: 20, xp: 35, rarity: 2, minLine: 1, weight: 20 },
-            { name: 'Salmon', emoji: '🐟', value: 35, xp: 50, rarity: 2, minLine: 2, weight: 15 },
-            { name: 'Tuna', emoji: '🐠', value: 50, xp: 75, rarity: 3, minLine: 2, weight: 10 },
-            { name: 'Swordfish', emoji: '🗡️', value: 75, xp: 100, rarity: 3, minLine: 3, weight: 7 },
-            { name: 'Octopus', emoji: '🐙', value: 100, xp: 150, rarity: 4, minLine: 3, weight: 5 },
-            { name: 'Shark', emoji: '🦈', value: 150, xp: 200, rarity: 4, minLine: 4, weight: 3 },
-            { name: 'Whale', emoji: '🐋', value: 250, xp: 350, rarity: 5, minLine: 5, weight: 1.5 },
-            { name: 'Golden Fish', emoji: '✨', value: 500, xp: 500, rarity: 5, minLine: 5, weight: 0.5 },
-            { name: 'Sea Dragon', emoji: '🐉', value: 1000, xp: 1000, rarity: 5, minLine: 6, weight: 0.2 },
-            { name: 'Old Boot', emoji: '👢', value: 1, xp: 5, rarity: 1, minLine: 1, weight: 5 },
-            { name: 'Treasure Chest', emoji: '💎', value: 200, xp: 100, rarity: 5, minLine: 1, weight: 0.3 },
+        function playReelSound() {
+            playSound(300 + Math.random() * 100, 0.05, 'square', 0.1);
+        }
+
+        function playSnapSound() {
+            playSound(150, 0.3, 'sawtooth', 0.3);
+            playSound(100, 0.4, 'sawtooth', 0.2);
+        }
+
+        // Rod Types - based on rod upgrade level
+        const rodTypes = [
+            { name: 'Wood', color: '#8B4513', gradient: ['#A0522D', '#654321'], minLevel: 1 },
+            { name: 'Plastic', color: '#4A90D9', gradient: ['#5DADE2', '#2874A6'], minLevel: 3 },
+            { name: 'Bronze', color: '#CD7F32', gradient: ['#DAA520', '#8B6914'], minLevel: 5 },
+            { name: 'Silver', color: '#C0C0C0', gradient: ['#E8E8E8', '#A0A0A0'], minLevel: 7 },
+            { name: 'Gold', color: '#FFD700', gradient: ['#FFE55C', '#DAA520'], minLevel: 9 },
+            { name: 'Diamond', color: '#00FFFF', gradient: ['#E0FFFF', '#00CED1'], minLevel: 10, sparkle: true }
         ];
+
+        function getCurrentRod() {
+            const level = gameState.upgrades.rod;
+            for (let i = rodTypes.length - 1; i >= 0; i--) {
+                if (level >= rodTypes[i].minLevel) return rodTypes[i];
+            }
+            return rodTypes[0];
+        }
+
+        // Day/Night Fish Types
+        const dayFishTypes = [
+            { name: 'Sardine', emoji: '🐟', value: 5, xp: 10, rarity: 1, minLine: 1, weight: 40, difficulty: 1 },
+            { name: 'Mackerel', emoji: '🐠', value: 10, xp: 20, rarity: 1, minLine: 1, weight: 30, difficulty: 1 },
+            { name: 'Bass', emoji: '🐡', value: 20, xp: 35, rarity: 2, minLine: 1, weight: 20, difficulty: 2 },
+            { name: 'Salmon', emoji: '🐟', value: 35, xp: 50, rarity: 2, minLine: 2, weight: 15, difficulty: 2 },
+            { name: 'Tuna', emoji: '🐠', value: 50, xp: 75, rarity: 3, minLine: 2, weight: 10, difficulty: 3 },
+            { name: 'Swordfish', emoji: '🗡️', value: 75, xp: 100, rarity: 3, minLine: 3, weight: 7, difficulty: 4 },
+            { name: 'Octopus', emoji: '🐙', value: 100, xp: 150, rarity: 4, minLine: 3, weight: 5, difficulty: 4 },
+            { name: 'Shark', emoji: '🦈', value: 150, xp: 200, rarity: 4, minLine: 4, weight: 3, difficulty: 5 },
+            { name: 'Whale', emoji: '🐋', value: 250, xp: 350, rarity: 5, minLine: 5, weight: 1.5, difficulty: 5 },
+            { name: 'Golden Fish', emoji: '✨', value: 500, xp: 500, rarity: 5, minLine: 5, weight: 0.5, difficulty: 3 },
+            { name: 'Sea Dragon', emoji: '🐉', value: 1000, xp: 1000, rarity: 5, minLine: 6, weight: 0.2, difficulty: 5 },
+            { name: 'Old Boot', emoji: '👢', value: 1, xp: 5, rarity: 1, minLine: 1, weight: 5, difficulty: 1 },
+            { name: 'Treasure Chest', emoji: '💎', value: 200, xp: 100, rarity: 5, minLine: 1, weight: 0.3, difficulty: 2 },
+        ];
+
+        const nightFishTypes = [
+            { name: 'Lanternfish', emoji: '🔦', value: 15, xp: 25, rarity: 1, minLine: 1, weight: 35, difficulty: 1, night: true },
+            { name: 'Moonfish', emoji: '🌙', value: 30, xp: 45, rarity: 2, minLine: 1, weight: 25, difficulty: 2, night: true },
+            { name: 'Anglerfish', emoji: '🐡', value: 60, xp: 90, rarity: 3, minLine: 2, weight: 12, difficulty: 4, night: true },
+            { name: 'Ghost Fish', emoji: '👻', value: 80, xp: 120, rarity: 3, minLine: 2, weight: 8, difficulty: 3, night: true },
+            { name: 'Vampire Squid', emoji: '🦑', value: 120, xp: 180, rarity: 4, minLine: 3, weight: 5, difficulty: 4, night: true },
+            { name: 'Bioluminescent Jellyfish', emoji: '🎐', value: 90, xp: 140, rarity: 4, minLine: 3, weight: 6, difficulty: 2, night: true },
+            { name: 'Abyssal Serpent', emoji: '🐍', value: 200, xp: 300, rarity: 5, minLine: 4, weight: 2, difficulty: 5, night: true },
+            { name: 'Starlight Manta', emoji: '⭐', value: 300, xp: 400, rarity: 5, minLine: 5, weight: 1, difficulty: 4, night: true },
+            { name: 'Lunar Leviathan', emoji: '🌕', value: 800, xp: 800, rarity: 5, minLine: 6, weight: 0.15, difficulty: 5, night: true },
+            { name: 'Sunken Treasure', emoji: '🏴‍☠️', value: 250, xp: 150, rarity: 5, minLine: 1, weight: 0.4, difficulty: 2, night: true },
+        ];
+
+        // Combine for collection display
+        const allFishTypes = [...dayFishTypes, ...nightFishTypes];
 
         // Game State
         let gameState = {
@@ -447,24 +604,56 @@
             bobber: { x: 0, y: 0, targetY: 0, visible: false },
             currentFish: null,
             biteTimer: 0,
+            // Reeling mini-game state
             reelProgress: 0,
+            tension: 50, // 0-100, want to keep in 30-70 range
+            fishPull: 0,
+            isReeling: false,
+            reelDifficulty: 1,
+            // Day/Night cycle
+            timeOfDay: 0, // 0-1, 0 = noon, 0.5 = midnight
+            dayLength: 180, // seconds for full day cycle (3 minutes)
+            isNight: false,
+            // Visual elements
             particles: [],
             bubbles: [],
-            fishInWater: []
+            fishInWater: [],
+            stars: []
         };
+
+        // Generate stars once
+        function generateStars() {
+            gameState.stars = [];
+            for (let i = 0; i < 100; i++) {
+                gameState.stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height * 0.4,
+                    size: Math.random() * 2 + 1,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
 
         // Load saved game
         function loadGame() {
             const saved = localStorage.getItem('fishingFrenzy');
             if (saved) {
                 const data = JSON.parse(saved);
-                Object.assign(gameState, data);
-                gameState.state = 'idle';
-                gameState.bobber.visible = false;
-                gameState.particles = [];
-                gameState.bubbles = [];
-                gameState.fishInWater = [];
+                gameState.coins = data.coins || 0;
+                gameState.level = data.level || 1;
+                gameState.xp = data.xp || 0;
+                gameState.xpNeeded = data.xpNeeded || 100;
+                gameState.totalFish = data.totalFish || 0;
+                gameState.upgrades = data.upgrades || { rod: 1, bait: 1, line: 1, luck: 1 };
+                gameState.collection = data.collection || {};
+                gameState.timeOfDay = data.timeOfDay || 0;
             }
+            gameState.state = 'idle';
+            gameState.bobber.visible = false;
+            gameState.particles = [];
+            gameState.bubbles = [];
+            gameState.fishInWater = [];
+            generateStars();
         }
 
         function saveGame() {
@@ -475,7 +664,8 @@
                 xpNeeded: gameState.xpNeeded,
                 totalFish: gameState.totalFish,
                 upgrades: gameState.upgrades,
-                collection: gameState.collection
+                collection: gameState.collection,
+                timeOfDay: gameState.timeOfDay
             };
             localStorage.setItem('fishingFrenzy', JSON.stringify(saveData));
         }
@@ -492,20 +682,39 @@
             document.getElementById('lineLevel').textContent = gameState.upgrades.line;
             document.getElementById('luckLevel').textContent = gameState.upgrades.luck;
 
+            // Update rod display
+            const rod = getCurrentRod();
+            document.getElementById('rodName').textContent = rod.name;
+            const rodIcon = document.getElementById('rodIcon');
+            rodIcon.style.background = `linear-gradient(90deg, ${rod.gradient[0]}, ${rod.gradient[1]})`;
+            if (rod.sparkle) {
+                rodIcon.style.boxShadow = '0 0 10px #00FFFF, 0 0 20px #00FFFF';
+            } else {
+                rodIcon.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+            }
+
             const rodCost = 100 * Math.pow(2, gameState.upgrades.rod - 1);
             const baitCost = 150 * Math.pow(2, gameState.upgrades.bait - 1);
             const lineCost = 200 * Math.pow(2, gameState.upgrades.line - 1);
             const luckCost = 250 * Math.pow(2, gameState.upgrades.luck - 1);
 
-            document.getElementById('buyRod').textContent = `${rodCost} 🪙`;
-            document.getElementById('buyBait').textContent = `${baitCost} 🪙`;
-            document.getElementById('buyLine').textContent = `${lineCost} 🪙`;
-            document.getElementById('buyLuck').textContent = `${luckCost} 🪙`;
+            document.getElementById('buyRod').textContent = gameState.upgrades.rod >= 10 ? 'MAX' : `${rodCost} 🪙`;
+            document.getElementById('buyBait').textContent = gameState.upgrades.bait >= 10 ? 'MAX' : `${baitCost} 🪙`;
+            document.getElementById('buyLine').textContent = gameState.upgrades.line >= 10 ? 'MAX' : `${lineCost} 🪙`;
+            document.getElementById('buyLuck').textContent = gameState.upgrades.luck >= 10 ? 'MAX' : `${luckCost} 🪙`;
 
             document.getElementById('buyRod').disabled = gameState.coins < rodCost || gameState.upgrades.rod >= 10;
             document.getElementById('buyBait').disabled = gameState.coins < baitCost || gameState.upgrades.bait >= 10;
             document.getElementById('buyLine').disabled = gameState.coins < lineCost || gameState.upgrades.line >= 10;
             document.getElementById('buyLuck').disabled = gameState.coins < luckCost || gameState.upgrades.luck >= 10;
+
+            // Update time indicator
+            const timeEl = document.getElementById('timeIndicator');
+            if (gameState.isNight) {
+                timeEl.textContent = '🌙 Night';
+            } else {
+                timeEl.textContent = '☀️ Day';
+            }
         }
 
         function showMessage(text, duration = 2000) {
@@ -531,14 +740,17 @@
             const lineLevel = gameState.upgrades.line;
             const luckBonus = gameState.upgrades.luck;
 
+            // Select fish pool based on time
+            const fishPool = gameState.isNight ? nightFishTypes : dayFishTypes;
+
             // Filter fish by line level and calculate weights
-            const available = fishTypes.filter(f => f.minLine <= lineLevel);
+            const available = fishPool.filter(f => f.minLine <= lineLevel);
             let weights = available.map(f => {
                 let w = f.weight;
                 // Bait increases rare fish chance
                 if (f.rarity >= 3) w *= (1 + baitBonus * 0.3);
                 // Luck affects treasure and special items
-                if (f.name === 'Treasure Chest' || f.name === 'Golden Fish') {
+                if (f.name.includes('Treasure') || f.name.includes('Golden') || f.name.includes('Sunken')) {
                     w *= (1 + luckBonus * 0.5);
                 }
                 return w;
@@ -592,6 +804,17 @@
             updateUI();
         }
 
+        function loseFish() {
+            gameState.state = 'idle';
+            gameState.bobber.visible = false;
+            gameState.reelProgress = 0;
+            gameState.isReeling = false;
+            document.getElementById('reelGame').style.display = 'none';
+            showMessage(`💔 The ${gameState.currentFish.emoji} ${gameState.currentFish.name} got away!`);
+            playSnapSound();
+            document.getElementById('instructions').textContent = 'Hold SPACE or CLICK to charge cast, release to fish!';
+        }
+
         // Particles
         function createSplash(x, y) {
             for (let i = 0; i < 15; i++) {
@@ -621,12 +844,16 @@
         function spawnBackgroundFish() {
             if (gameState.fishInWater.length < 10 && Math.random() < 0.02) {
                 const waterTop = canvas.height * 0.45;
+                const isNightFish = gameState.isNight;
                 gameState.fishInWater.push({
                     x: Math.random() < 0.5 ? -50 : canvas.width + 50,
                     y: waterTop + Math.random() * (canvas.height - waterTop - 50),
                     speed: (Math.random() * 2 + 1) * (Math.random() < 0.5 ? 1 : -1),
                     size: Math.random() * 20 + 15,
-                    color: `hsl(${Math.random() * 60 + 180}, 70%, 50%)`
+                    color: isNightFish
+                        ? `hsl(${Math.random() * 60 + 260}, 70%, 60%)` // Purple/blue for night
+                        : `hsl(${Math.random() * 60 + 180}, 70%, 50%)`, // Blue/green for day
+                    glow: isNightFish
                 });
             }
         }
@@ -672,17 +899,56 @@
             document.getElementById('instructions').textContent = 'Casting...';
         }
 
-        canvas.addEventListener('mousedown', startCast);
-        canvas.addEventListener('mouseup', releaseCast);
-        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startCast(); });
-        canvas.addEventListener('touchend', (e) => { e.preventDefault(); releaseCast(); });
+        function startReeling() {
+            if (gameState.state === 'reeling') {
+                gameState.isReeling = true;
+            }
+        }
+
+        function stopReeling() {
+            gameState.isReeling = false;
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            if (gameState.state === 'idle') {
+                startCast();
+            } else if (gameState.state === 'biting') {
+                attemptCatch();
+            } else if (gameState.state === 'reeling') {
+                startReeling();
+            }
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            releaseCast();
+            stopReeling();
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameState.state === 'idle') {
+                startCast();
+            } else if (gameState.state === 'biting') {
+                attemptCatch();
+            } else if (gameState.state === 'reeling') {
+                startReeling();
+            }
+        });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            releaseCast();
+            stopReeling();
+        });
 
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space' && !e.repeat) {
                 e.preventDefault();
                 if (gameState.state === 'biting') {
                     attemptCatch();
-                } else {
+                } else if (gameState.state === 'reeling') {
+                    startReeling();
+                } else if (gameState.state === 'idle') {
                     startCast();
                 }
             }
@@ -692,20 +958,27 @@
             if (e.code === 'Space') {
                 e.preventDefault();
                 releaseCast();
-            }
-        });
-
-        canvas.addEventListener('click', () => {
-            if (gameState.state === 'biting') {
-                attemptCatch();
+                stopReeling();
             }
         });
 
         function attemptCatch() {
             if (gameState.state !== 'biting') return;
 
+            // Start reeling mini-game
             gameState.state = 'reeling';
-            document.getElementById('instructions').textContent = 'Reeling in...';
+            gameState.tension = 50;
+            gameState.reelProgress = 0;
+            gameState.fishPull = 0;
+            gameState.isReeling = false;
+
+            // Difficulty based on fish
+            const baseDifficulty = gameState.currentFish.difficulty || 1;
+            const lineBonus = gameState.upgrades.line * 0.1; // Line makes it easier
+            gameState.reelDifficulty = Math.max(0.5, baseDifficulty - lineBonus);
+
+            document.getElementById('reelGame').style.display = 'block';
+            document.getElementById('instructions').textContent = 'Hold SPACE/Click to reel! Keep marker in GREEN zone!';
         }
 
         // Shop
@@ -724,6 +997,13 @@
                 gameState.upgrades[type]++;
                 playSound(600, 0.1, 'sine');
                 playSound(800, 0.1, 'sine');
+
+                // Show rod upgrade message
+                if (type === 'rod') {
+                    const newRod = getCurrentRod();
+                    showMessage(`🎣 Upgraded to ${newRod.name} Rod!`, 2500);
+                }
+
                 saveGame();
                 updateUI();
             }
@@ -748,7 +1028,14 @@
             const list = document.getElementById('fishList');
             list.innerHTML = '';
 
-            fishTypes.forEach(fish => {
+            // Day fish header
+            const dayHeader = document.createElement('h3');
+            dayHeader.textContent = '☀️ Day Fish';
+            dayHeader.style.color = '#f39c12';
+            dayHeader.style.marginTop = '10px';
+            list.appendChild(dayHeader);
+
+            dayFishTypes.forEach(fish => {
                 const count = gameState.collection[fish.name] || 0;
                 const div = document.createElement('div');
                 div.className = 'fish-entry' + (count === 0 ? ' locked' : '');
@@ -756,7 +1043,28 @@
                     <span class="fish-icon">${count > 0 ? fish.emoji : '❓'}</span>
                     <div>
                         <strong>${count > 0 ? fish.name : '???'}</strong><br>
-                        <small>Caught: ${count} | Value: ${fish.value} 🪙</small>
+                        <small>Caught: ${count} | Value: ${fish.value} 🪙 | Difficulty: ${'⭐'.repeat(fish.difficulty)}</small>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+
+            // Night fish header
+            const nightHeader = document.createElement('h3');
+            nightHeader.textContent = '🌙 Night Fish';
+            nightHeader.style.color = '#9b59b6';
+            nightHeader.style.marginTop = '20px';
+            list.appendChild(nightHeader);
+
+            nightFishTypes.forEach(fish => {
+                const count = gameState.collection[fish.name] || 0;
+                const div = document.createElement('div');
+                div.className = 'fish-entry night-fish' + (count === 0 ? ' locked' : '');
+                div.innerHTML = `
+                    <span class="fish-icon">${count > 0 ? fish.emoji : '❓'}</span>
+                    <div>
+                        <strong>${count > 0 ? fish.name : '???'}</strong><br>
+                        <small>Caught: ${count} | Value: ${fish.value} 🪙 | Difficulty: ${'⭐'.repeat(fish.difficulty)}</small>
                     </div>
                 `;
                 list.appendChild(div);
@@ -765,6 +1073,23 @@
 
         // Game Loop
         function update(dt) {
+            // Update day/night cycle
+            gameState.timeOfDay += dt / gameState.dayLength;
+            if (gameState.timeOfDay >= 1) gameState.timeOfDay -= 1;
+
+            const wasNight = gameState.isNight;
+            gameState.isNight = gameState.timeOfDay > 0.25 && gameState.timeOfDay < 0.75;
+
+            // Notify on time change
+            if (wasNight !== gameState.isNight) {
+                if (gameState.isNight) {
+                    showMessage('🌙 Night has fallen... New fish appear!', 3000);
+                } else {
+                    showMessage('☀️ The sun rises... Day fish return!', 3000);
+                }
+                updateUI();
+            }
+
             // Charging
             if (gameState.state === 'charging') {
                 gameState.castPower = Math.min(100, gameState.castPower + dt * 80);
@@ -825,24 +1150,81 @@
                     // Fish got away
                     gameState.state = 'idle';
                     gameState.bobber.visible = false;
-                    showMessage('The fish got away! 🐟💨');
+                    showMessage('Too slow! The fish got away! 🐟💨');
                     playMissSound();
                     document.getElementById('instructions').textContent = 'Hold SPACE or CLICK to charge cast, release to fish!';
                 }
             }
 
-            // Reeling
+            // Reeling mini-game
             if (gameState.state === 'reeling') {
-                gameState.reelProgress += dt * 2;
-                gameState.bobber.y -= dt * 200;
+                // Fish pulls the tension up randomly
+                const pullStrength = gameState.reelDifficulty * 30;
+                const pullVariation = Math.sin(Date.now() / (300 / gameState.reelDifficulty)) * pullStrength;
+                const randomJerk = Math.random() < 0.02 ? (Math.random() - 0.5) * 40 * gameState.reelDifficulty : 0;
 
-                if (gameState.bobber.y < canvas.height * 0.3) {
+                gameState.fishPull = pullVariation + randomJerk;
+
+                // Tension mechanics
+                if (gameState.isReeling) {
+                    // Reeling decreases tension (pulls line in)
+                    gameState.tension -= dt * 60;
+                    // Progress increases when reeling in green zone
+                    if (gameState.tension >= 20 && gameState.tension <= 80) {
+                        gameState.reelProgress += dt * (25 / gameState.reelDifficulty);
+                        playReelSound();
+                    }
+                } else {
+                    // Not reeling - tension increases (fish pulls away)
+                    gameState.tension += dt * 40 * gameState.reelDifficulty;
+                }
+
+                // Apply fish pull
+                gameState.tension += gameState.fishPull * dt;
+
+                // Clamp and check failure
+                if (gameState.tension < 0) {
+                    // Line went slack - fish escaped!
+                    loseFish();
+                    return;
+                }
+                if (gameState.tension > 100) {
+                    // Line snapped!
+                    loseFish();
+                    return;
+                }
+
+                // Update UI
+                document.getElementById('tensionMarker').style.left = gameState.tension + '%';
+                document.getElementById('reelProgressFill').style.width = gameState.reelProgress + '%';
+
+                // Update struggle text
+                const struggleEl = document.getElementById('fishStruggle');
+                if (Math.abs(gameState.fishPull) > 20) {
+                    struggleEl.textContent = '⚠️ The fish is fighting hard!';
+                    struggleEl.style.color = '#e74c3c';
+                } else if (Math.abs(gameState.fishPull) > 10) {
+                    struggleEl.textContent = '🐟 The fish is struggling...';
+                    struggleEl.style.color = '#f39c12';
+                } else {
+                    struggleEl.textContent = '✨ The fish is calm...';
+                    struggleEl.style.color = '#2ecc71';
+                }
+
+                // Check win
+                if (gameState.reelProgress >= 100) {
+                    document.getElementById('reelGame').style.display = 'none';
                     catchFish(gameState.currentFish);
                     gameState.state = 'idle';
                     gameState.bobber.visible = false;
                     gameState.reelProgress = 0;
+                    gameState.isReeling = false;
                     document.getElementById('instructions').textContent = 'Hold SPACE or CLICK to charge cast, release to fish!';
                 }
+
+                // Bobber movement during reeling
+                gameState.bobber.y = gameState.bobber.targetY - (gameState.reelProgress / 100) * (gameState.bobber.targetY - canvas.height * 0.35);
+                gameState.bobber.x += Math.sin(Date.now() / 100) * 2;
             }
 
             // Update particles
@@ -874,30 +1256,110 @@
 
             const waterTop = canvas.height * 0.45;
 
+            // Calculate day/night interpolation
+            // 0 = noon (brightest), 0.5 = midnight (darkest)
+            let nightAmount;
+            if (gameState.timeOfDay < 0.25) {
+                nightAmount = 1 - (gameState.timeOfDay / 0.25); // Dawn
+            } else if (gameState.timeOfDay < 0.5) {
+                nightAmount = (gameState.timeOfDay - 0.25) / 0.25; // Dusk approaching midnight
+            } else if (gameState.timeOfDay < 0.75) {
+                nightAmount = 1 - (gameState.timeOfDay - 0.5) / 0.25; // After midnight
+            } else {
+                nightAmount = (gameState.timeOfDay - 0.75) / 0.25; // Evening
+            }
+            nightAmount = Math.max(0, Math.min(1, nightAmount));
+
+            // Sky colors interpolated
+            const daySkyTop = [135, 206, 235]; // #87CEEB
+            const daySkyBottom = [74, 144, 217]; // #4A90D9
+            const nightSkyTop = [10, 10, 35];
+            const nightSkyBottom = [25, 25, 60];
+
+            const skyTopColor = interpolateColor(daySkyTop, nightSkyTop, nightAmount);
+            const skyBottomColor = interpolateColor(daySkyBottom, nightSkyBottom, nightAmount);
+
             // Sky gradient
             const skyGrad = ctx.createLinearGradient(0, 0, 0, waterTop);
-            skyGrad.addColorStop(0, '#87CEEB');
-            skyGrad.addColorStop(1, '#4A90D9');
+            skyGrad.addColorStop(0, `rgb(${skyTopColor.join(',')})`);
+            skyGrad.addColorStop(1, `rgb(${skyBottomColor.join(',')})`);
             ctx.fillStyle = skyGrad;
             ctx.fillRect(0, 0, canvas.width, waterTop);
 
-            // Sun
-            ctx.beginPath();
-            ctx.arc(canvas.width - 100, 80, 50, 0, Math.PI * 2);
-            ctx.fillStyle = '#FFD700';
-            ctx.fill();
+            // Stars (only at night)
+            if (nightAmount > 0.3) {
+                const starAlpha = (nightAmount - 0.3) / 0.7;
+                gameState.stars.forEach(star => {
+                    const twinkle = Math.sin(Date.now() / 500 + star.twinkle) * 0.3 + 0.7;
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${starAlpha * twinkle})`;
+                    ctx.fill();
+                });
+            }
 
-            // Clouds
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            // Sun or Moon
+            if (nightAmount < 0.5) {
+                // Sun
+                const sunAlpha = 1 - nightAmount * 2;
+                ctx.beginPath();
+                ctx.arc(canvas.width - 100, 80, 50, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 215, 0, ${sunAlpha})`;
+                ctx.fill();
+                // Sun glow
+                const sunGlow = ctx.createRadialGradient(canvas.width - 100, 80, 30, canvas.width - 100, 80, 80);
+                sunGlow.addColorStop(0, `rgba(255, 200, 50, ${sunAlpha * 0.3})`);
+                sunGlow.addColorStop(1, 'rgba(255, 200, 50, 0)');
+                ctx.fillStyle = sunGlow;
+                ctx.fillRect(canvas.width - 200, 0, 200, 180);
+            }
+            if (nightAmount > 0.3) {
+                // Moon
+                const moonAlpha = (nightAmount - 0.3) / 0.7;
+                ctx.beginPath();
+                ctx.arc(canvas.width - 100, 80, 40, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(240, 240, 220, ${moonAlpha})`;
+                ctx.fill();
+                // Moon craters
+                ctx.beginPath();
+                ctx.arc(canvas.width - 90, 70, 8, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(200, 200, 180, ${moonAlpha * 0.5})`;
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(canvas.width - 115, 90, 6, 0, Math.PI * 2);
+                ctx.fill();
+                // Moon glow
+                const moonGlow = ctx.createRadialGradient(canvas.width - 100, 80, 30, canvas.width - 100, 80, 100);
+                moonGlow.addColorStop(0, `rgba(200, 200, 255, ${moonAlpha * 0.2})`);
+                moonGlow.addColorStop(1, 'rgba(200, 200, 255, 0)');
+                ctx.fillStyle = moonGlow;
+                ctx.fillRect(canvas.width - 220, 0, 240, 200);
+            }
+
+            // Clouds (dimmer at night)
+            const cloudAlpha = 0.8 - nightAmount * 0.5;
+            ctx.fillStyle = `rgba(255, 255, 255, ${cloudAlpha})`;
             drawCloud(100, 60, 1);
             drawCloud(300, 100, 0.7);
             drawCloud(canvas.width - 300, 120, 0.8);
 
+            // Water colors
+            const dayWaterTop = [30, 144, 255];
+            const dayWaterMid = [0, 105, 148];
+            const dayWaterBottom = [0, 51, 102];
+            const nightWaterTop = [20, 50, 100];
+            const nightWaterMid = [10, 30, 60];
+            const nightWaterBottom = [5, 15, 40];
+
+            const waterTopColor = interpolateColor(dayWaterTop, nightWaterTop, nightAmount);
+            const waterMidColor = interpolateColor(dayWaterMid, nightWaterMid, nightAmount);
+            const waterBottomColor = interpolateColor(dayWaterBottom, nightWaterBottom, nightAmount);
+
             // Water gradient
             const waterGrad = ctx.createLinearGradient(0, waterTop, 0, canvas.height);
-            waterGrad.addColorStop(0, '#1E90FF');
-            waterGrad.addColorStop(0.5, '#006994');
-            waterGrad.addColorStop(1, '#003366');
+            waterGrad.addColorStop(0, `rgb(${waterTopColor.join(',')})`);
+            waterGrad.addColorStop(0.5, `rgb(${waterMidColor.join(',')})`);
+            waterGrad.addColorStop(1, `rgb(${waterBottomColor.join(',')})`);
             ctx.fillStyle = waterGrad;
             ctx.fillRect(0, waterTop, canvas.width, canvas.height - waterTop);
 
@@ -910,7 +1372,7 @@
             ctx.lineTo(canvas.width, waterTop + 20);
             ctx.lineTo(0, waterTop + 20);
             ctx.closePath();
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.2 - nightAmount * 0.1})`;
             ctx.fill();
 
             // Draw background fish
@@ -918,6 +1380,13 @@
                 ctx.save();
                 ctx.translate(f.x, f.y);
                 ctx.scale(f.speed > 0 ? 1 : -1, 1);
+
+                // Glow effect for night fish
+                if (f.glow && nightAmount > 0.3) {
+                    ctx.shadowColor = f.color;
+                    ctx.shadowBlur = 15;
+                }
+
                 ctx.fillStyle = f.color;
                 ctx.beginPath();
                 ctx.ellipse(0, 0, f.size, f.size * 0.5, 0, 0, Math.PI * 2);
@@ -938,10 +1407,41 @@
             ctx.fillRect(canvas.width / 2 - 50, waterTop, 20, 60);
             ctx.fillRect(canvas.width / 2 + 30, waterTop, 20, 60);
 
-            // Draw fishing rod
+            // Draw fishing rod with current rod type
             if (gameState.bobber.visible || gameState.state === 'charging') {
-                ctx.strokeStyle = '#654321';
-                ctx.lineWidth = 4;
+                const rod = getCurrentRod();
+
+                // Rod shadow
+                ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                ctx.lineWidth = 6;
+                ctx.beginPath();
+                ctx.moveTo(canvas.width / 2 + 2, waterTop - 13);
+                ctx.quadraticCurveTo(
+                    canvas.width / 2 + 52,
+                    waterTop - 98,
+                    canvas.width / 2 + 32,
+                    canvas.height * 0.25 + 2
+                );
+                ctx.stroke();
+
+                // Rod gradient
+                const rodGrad = ctx.createLinearGradient(
+                    canvas.width / 2, waterTop - 15,
+                    canvas.width / 2 + 30, canvas.height * 0.25
+                );
+                rodGrad.addColorStop(0, rod.gradient[0]);
+                rodGrad.addColorStop(1, rod.gradient[1]);
+
+                ctx.strokeStyle = rodGrad;
+                ctx.lineWidth = 5;
+                ctx.lineCap = 'round';
+
+                // Diamond rod sparkle effect
+                if (rod.sparkle) {
+                    ctx.shadowColor = '#00FFFF';
+                    ctx.shadowBlur = 10;
+                }
+
                 ctx.beginPath();
                 ctx.moveTo(canvas.width / 2, waterTop - 15);
                 ctx.quadraticCurveTo(
@@ -952,9 +1452,11 @@
                 );
                 ctx.stroke();
 
+                ctx.shadowBlur = 0;
+
                 // Fishing line
                 if (gameState.bobber.visible) {
-                    ctx.strokeStyle = '#AAA';
+                    ctx.strokeStyle = gameState.isNight ? 'rgba(200,200,255,0.6)' : '#AAA';
                     ctx.lineWidth = 1;
                     ctx.beginPath();
                     ctx.moveTo(canvas.width / 2 + 30, canvas.height * 0.25);
@@ -965,6 +1467,12 @@
 
             // Draw bobber
             if (gameState.bobber.visible) {
+                // Bobber glow at night
+                if (gameState.isNight) {
+                    ctx.shadowColor = '#FF6B6B';
+                    ctx.shadowBlur = 10;
+                }
+
                 ctx.beginPath();
                 ctx.arc(gameState.bobber.x, gameState.bobber.y, 8, 0, Math.PI * 2);
                 ctx.fillStyle = gameState.state === 'biting' ? '#FF0000' : '#FF6B6B';
@@ -974,12 +1482,20 @@
                 ctx.fillStyle = '#FFFFFF';
                 ctx.fill();
 
+                ctx.shadowBlur = 0;
+
                 // Exclamation when biting
                 if (gameState.state === 'biting') {
                     ctx.font = 'bold 30px Arial';
                     ctx.fillStyle = '#FF0000';
                     ctx.textAlign = 'center';
                     ctx.fillText('!', gameState.bobber.x, gameState.bobber.y - 30);
+                }
+
+                // Show fish emoji during reeling
+                if (gameState.state === 'reeling' && gameState.currentFish) {
+                    ctx.font = '24px Arial';
+                    ctx.fillText(gameState.currentFish.emoji, gameState.bobber.x, gameState.bobber.y + 35);
                 }
             }
 
@@ -998,6 +1514,14 @@
                 ctx.fillStyle = `rgba(255, 255, 255, ${p.life})`;
                 ctx.fill();
             });
+        }
+
+        function interpolateColor(c1, c2, t) {
+            return [
+                Math.round(c1[0] + (c2[0] - c1[0]) * t),
+                Math.round(c1[1] + (c2[1] - c1[1]) * t),
+                Math.round(c1[2] + (c2[2] - c1[2]) * t)
+            ];
         }
 
         function drawCloud(x, y, scale) {
